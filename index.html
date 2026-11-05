@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Crónicas del Gremio</title>
+<style>
+:root{--gold:#f2c14e;--ink:#1a1424;--panel:rgba(22,16,34,.93);--line:#5b4a7a;--txt:#f4efe6;--dim:#a99fbb}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0b0813;color:var(--txt);font-family:Georgia,'Palatino Linotype',serif;overflow:hidden}
+#app{position:relative;width:100%;height:100%;max-width:1280px;margin:0 auto;overflow:hidden;background:#000;user-select:none}
+#bg,#bgdeco{position:absolute;inset:0;transition:opacity .6s}
+#bgdeco svg{width:100%;height:100%;display:block}
+#vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55));pointer-events:none}
+#fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#fx i{position:absolute;width:5px;height:5px;border-radius:50%;background:rgba(255,235,170,.55);animation:float linear infinite}
+@keyframes float{from{transform:translateY(0);opacity:0}15%{opacity:.8}to{transform:translateY(-110vh) translateX(40px);opacity:0}}
+#stage{position:absolute;left:0;right:0;bottom:0;top:6%;pointer-events:none}
+.slot{position:absolute;bottom:0;height:88%;aspect-ratio:200/320;transition:filter .3s,opacity .4s,transform .4s}
+.slot.left{left:5%}.slot.right{right:5%}.slot.center{left:50%;transform:translateX(-50%)}
+.slot svg{width:100%;height:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.6));animation:breathe 4s ease-in-out infinite;transform-origin:bottom}
+.slot.dim{filter:brightness(.55) saturate(.7)}
+.slot.in{animation:slotin .5s}
+@keyframes slotin{from{opacity:0;transform:translateY(24px)}}
+.slot.center.in{animation:slotinc .5s}
+@keyframes slotinc{from{opacity:0;transform:translateX(-50%) translateY(24px)}}
+@keyframes breathe{50%{transform:scaleY(1.012)}}
+.blink{animation:blink 4.5s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.08)}}
+#hud{position:absolute;top:0;left:0;right:0;display:none;gap:8px;padding:8px 10px;background:linear-gradient(#000c,#0000);font-size:14px;flex-wrap:wrap;z-index:5}
+#hud span{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:4px 12px;white-space:nowrap}
+#hud b{color:var(--gold)}
+#dlg{position:absolute;left:3%;right:3%;bottom:2.5%;min-height:22%;background:linear-gradient(180deg,rgba(28,20,46,.93),rgba(14,10,24,.96));border:2px solid var(--line);border-radius:14px;padding:22px 26px 18px;display:none;z-index:6;cursor:pointer;box-shadow:0 0 30px #000a}
+#dlg.narr #name{display:none}
+#dlg.narr #text{font-style:italic;color:#e6dcc8}
+#name{position:absolute;top:-17px;left:22px;background:var(--gold);color:#2a1a05;font-weight:bold;padding:3px 18px;border-radius:8px;font-size:16px;letter-spacing:.5px}
+#text{font-size:clamp(15px,2.3vw,21px);line-height:1.5;min-height:3em}
+#next{position:absolute;right:18px;bottom:8px;color:var(--gold);animation:bob 1s infinite}
+@keyframes bob{50%{transform:translateY(4px)}}
+#choices{position:absolute;left:0;right:0;top:0;bottom:0;display:none;flex-direction:column;justify-content:center;align-items:center;gap:12px;z-index:8;background:rgba(0,0,0,.38);padding:0 6%}
+button{font-family:inherit;color:var(--txt);cursor:pointer}
+.ch{width:min(620px,100%);padding:13px 20px;font-size:clamp(14px,2vw,18px);background:linear-gradient(var(--panel),#120c1f);border:2px solid var(--line);border-radius:10px;text-align:left;transition:.15s}
+.ch:hover:not(:disabled){border-color:var(--gold);transform:translateX(6px);background:#2a1d44}
+.ch:disabled{opacity:.4;cursor:not-allowed}
+.ch small{color:var(--dim);display:block;margin-top:2px}
+#menu{position:absolute;right:10px;bottom:10px;display:none;flex-direction:column;gap:7px;z-index:7;width:min(230px,44%)}
+#menu button{padding:11px 14px;background:var(--panel);border:2px solid var(--line);border-radius:10px;font-size:16px;text-align:left;transition:.15s}
+#menu button:hover{border-color:var(--gold);background:#2a1d44}
+#menu .end{background:#4a2a14;border-color:#a86a2a}
+#hubtip{position:absolute;left:12px;bottom:12px;max-width:min(380px,52%);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--dim);display:none;z-index:7}
+#panel{position:absolute;inset:0;background:rgba(6,3,12,.8);z-index:20;display:none;align-items:center;justify-content:center;padding:10px}
+#pbox{width:min(980px,100%);max-height:94%;background:var(--panel);border:2px solid var(--line);border-radius:14px;display:flex;flex-direction:column;overflow:hidden}
+#phead{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);background:#1d1430}
+#phead h2{font-size:20px;color:var(--gold);font-weight:normal}
+#pbody{padding:14px 16px;overflow:auto}
+.x{background:none;border:1px solid var(--line);border-radius:8px;padding:4px 12px;font-size:16px}
+.x:hover{border-color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.card{background:#1b1230;border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:7px}
+.card h3{font-size:17px;color:var(--gold);font-weight:normal}
+.card p{font-size:13.5px;color:#d6cde6;line-height:1.4}
+.row{display:flex;gap:10px;align-items:center}
+.face{width:64px;height:72px;border-radius:8px;background:#2c1f47;flex:none;overflow:hidden;border:1px solid var(--line)}
+.face svg{width:100%;height:100%}
+.tag{font-size:12px;padding:2px 8px;border-radius:10px;background:#33264f;color:#d9cff0;white-space:nowrap}
+.ok{color:#7fe08a}.bad{color:#ff7a7a}.mid{color:#ffd166}
+.bar{height:7px;background:#0007;border-radius:4px;overflow:hidden;flex:1}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#ff7aa8,#ffd166)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.b{padding:7px 14px;background:#2d2050;border:1px solid var(--line);border-radius:8px;font-size:14px}
+.b:hover:not(:disabled){border-color:var(--gold);background:#3b2a66}
+.b:disabled{opacity:.4;cursor:not-allowed}
+.b.pri{background:#7a4b0f;border-color:var(--gold)}
+.sel{outline:2px solid var(--gold);background:#3b2a66}
+h4{margin:14px 0 8px;color:var(--dim);font-weight:normal;font-size:14px;letter-spacing:1px;text-transform:uppercase}
+#title{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;background:radial-gradient(ellipse at 50% 30%,#3b2461,#0b0813 75%);padding:20px}
+#title h1{font-size:clamp(34px,7vw,72px);color:var(--gold);text-shadow:0 0 30px #f2c14e66,0 4px 0 #5a3a05;letter-spacing:2px;font-weight:normal}
+#title p{color:var(--dim);max-width:520px;line-height:1.5}
+#title input{padding:11px 16px;font-size:18px;border-radius:10px;border:2px solid var(--line);background:#150d24;color:var(--txt);text-align:center;font-family:inherit;width:min(340px,90%)}
+#title .ch{text-align:center;width:min(340px,90%)}
+.hidden{display:none!important}
+#toast{position:absolute;top:56px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--gold);padding:8px 18px;border-radius:20px;z-index:40;display:none;font-size:15px}
+@media(max-width:700px){.slot{height:70%}#menu{width:46%}#menu button{padding:8px 10px;font-size:14px}#hubtip{display:none!important}#dlg{padding:20px 16px 16px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="bg"></div><div id="bgdeco"></div><div id="fx"></div><div id="vig"></div>
+  <div id="stage"><div class="slot left"></div><div class="slot center"></div><div class="slot right"></div></div>
+  <div id="hud"></div>
+  <div id="hubtip"></div>
+  <div id="menu"></div>
+  <div id="dlg"><div id="name"></div><div id="text"></div><div id="next">▼</div></div>
+  <div id="choices"></div>
+  <div id="panel"><div id="pbox"><div id="phead"><h2 id="ptitle"></h2><button class="x" onclick="closePanel()">✕ Cerrar</button></div><div id="pbody"></div></div></div>
+  <div id="toast"></div>
+  <div id="title">
+    <h1>Crónicas del Gremio</h1>
+    <p>Hereda un gremio de aventureros en ruinas. Recluta héroes, envíalos de misión, cuida de ellos y devuelve la gloria a tu nombre.</p>
+    <input id="gname" maxlength="26" placeholder="Nombre de tu gremio" value="El Grifo Dorado">
+    <button class="ch" onclick="startNew()">⚔️ Nueva partida</button>
+    <button class="ch" id="contBtn" onclick="loadGame()" style="display:none">📖 Continuar</button>
+  </div>
+</div>
+
+<script>
+/* ============ utilidades ============ */
+const $=s=>document.querySelector(s);
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const shade=(hex,f)=>{const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const k=f<0?0:255,p=Math.abs(f);return '#'+[r,g,b].map(c=>Math.round((k-c)*p+c).toString(16).padStart(2,'0')).join('')};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ============ datos ============ */
+const CLS={
+  war:{n:'Guerrero',ic:'⚔️',col:'#b33a3a',main:'f'},
+  mage:{n:'Mago',ic:'🔮',col:'#5a46b0',main:'m'},
+  rogue:{n:'Pícaro',ic:'🗡️',col:'#34524f',main:'a'},
+  heal:{n:'Sanador',ic:'✨',col:'#d9d2bd',main:'m'},
+  arch:{n:'Arquero',ic:'🏹',col:'#3d7a45',main:'a'},
+  npc:{n:'Civil',ic:'👤',col:'#8a5a3a',main:'f'}
+};
+const SK=['#f6d5bd','#e8b896','#c98f6a','#9c6847','#6d4530'];
+const HC=['#2b1b14','#5a3825','#a35a2c','#d8b45a','#ece4d6','#7a3fa5','#2f5fa8','#b8324a'];
+const EC=['#3a7bd5','#2e9e5b','#a05a2c','#8a3fc2','#d1403a','#2a8f9c'];
+const STY=['long','short','twin','bob','spiky'];
+const NAMES=['Kael','Lysa','Thorin','Mireya','Dante','Ayla','Brisa','Rowan','Iker','Selene','Garrick','Nerea','Orión','Vera','Tomás','Elara','Bruno','Zafira','Hugo','Ilia','Dario','Noa','Fenrir','Alba','Ciro','Luna','Marcos','Yara'];
+const PERSN={orgulloso:'Orgulloso/a',timido:'Tímido/a',alegre:'Alegre',sarcastico:'Sarcástico/a',serio:'Serio/a'};
+
+const PERS={
+orgulloso:{like:'praise',hi:['¿Necesitas algo, jefe? Espero que sea una misión digna de mí.','Estoy en mi mejor forma. Como siempre.'],
+ win:'¿Lo ves? Nadie lo hace como yo.',lose:'Un error... que no se repetirá. Nunca.',
+ praise:'Por fin alguien con criterio.',advice:'Hmpf... lo consideraré. Quizá.',meal:'Acepto. Pero que conste que el mérito es mío por tener hambre.',
+ s1:[['m','Jefe, ¿puedo contarte algo? Mi familia era de la nobleza. Lo perdimos todo.','sad'],['m','Por eso necesito ser el mejor. No quiero volver a ser nadie.','sad'],['y','Aquí eres alguien, {n}. Lo has demostrado.'],['m','...Gracias. Lo recordaré.','happy']],
+ s2:[['m','Rechacé una oferta de la Guardia Real la semana pasada.','neutral'],['y','¿Por qué?','neutral'],['m','Porque este gremio, aunque sea un desastre... es mi hogar. No se lo digas a nadie.','happy']]},
+timido:{like:'advice',hi:['¡A-ah! Hola, jefe... ¿he hecho algo mal?','Eh... buenos días. Estaba practicando en silencio.'],
+ win:'¿Lo hicimos...? ¡Lo hicimos!',lose:'Lo siento, lo siento, lo siento...',
+ praise:'¡E-eh! Gracias... no es para tanto...',advice:'Lo apuntaré. De verdad. Gracias por confiar en mí.',meal:'¿Para mí? ...Qué amable.',
+ s1:[['m','Jefe... siempre me ponía nervioso hablar con la gente.','sad'],['m','Pero aquí nadie se burla de mí. Eso... significa mucho.','happy'],['y','Tienes más talento del que crees, {n}.'],['m','Voy a esforzarme. ¡Lo prometo!','happy']],
+ s2:[['m','Escribí una carta a mi madre. Le conté que tengo un gremio que me trata bien.','happy'],['m','Dice que está orgullosa. Yo... también lo estoy, un poquito.','happy']]},
+alegre:{like:'meal',hi:['¡Jefe! ¡Qué día tan bonito para una aventura!','¡Hola, hola! ¿Hay pastel hoy? ¡Siempre pregunto!'],
+ win:'¡Ha sido genial! ¡Hay que repetirlo!',lose:'Bueno... ¡al menos seguimos vivos! ¿No?',
+ praise:'¡Jajaja! ¡Me vas a sonrojar!',advice:'¡Anotado! Aunque se me olvidará en cinco minutos.',meal:'¡¡Comida!! ¡Eres el mejor jefe del mundo!',
+ s1:[['m','¿Sabes por qué siempre sonrío, jefe?','neutral'],['m','Porque de niño no había mucho motivo. Decidí inventármelos.','sad'],['y','Contagias esa alegría a todo el gremio, {n}.'],['m','¡Pues entonces seguiré sonriendo!','happy']],
+ s2:[['m','¡Jefe, mira! ¡Hice una bandera para el gremio!','happy'],['g','Es un garabato torcido de un grifo con ojos enormes. Increíblemente, os encanta.'],['m','¡La colgaremos en el salón! ¡Familia Grifo para siempre!','happy']]},
+sarcastico:{like:'meal',hi:['Oh, el jefe en persona. Qué honor insoportable.','Si buscas a alguien que trabaje, sigue buscando. Es broma. Casi.'],
+ win:'Vaya, ha salido bien. Qué sorpresa para todos, yo incluido.',lose:'Bueno, la derrota también tiene su encanto. Poco, pero tiene.',
+ praise:'Vaya, ¿quién te ha pagado para decir eso?',advice:'Qué consejo tan... consejero. Gracias, supongo.',meal:'Comida gratis. Empiezo a sospechar que me quieres.',
+ s1:[['m','¿Sabes por qué hago bromas todo el rato?','neutral'],['m','Es más fácil que admitir que me importáis un montón.','sad'],['y','Ya lo sabía, {n}.'],['m','...Cállate. Qué pesado eres. Gracias.','happy']],
+ s2:[['m','Te he guardado la última tarta. No me lo agradezcas. O sí, mejor.','happy'],['y','Gracias, {n}.'],['m','Uf, ya me arrepiento de ser amable.','happy']]},
+serio:{like:'advice',hi:['Jefe. Estoy listo para recibir órdenes.','Reporte: equipo revisado y afilado.'],
+ win:'Misión cumplida. Sin incidentes relevantes.',lose:'Fallo mío. Analizaré qué ocurrió.',
+ praise:'Agradezco el reconocimiento. Seguiré mejorando.',advice:'Consejo valorado. Lo aplicaré.',meal:'Es un gesto apreciado. Gracias.',
+ s1:[['m','Serví en el ejército del norte. Perdí a mi escuadra.','sad'],['m','No pensaba volver a confiar en un equipo. Hasta llegar aquí.','neutral'],['y','Aquí nadie se queda atrás, {n}.'],['m','Entendido. Es una promesa que quiero ayudar a cumplir.','happy']],
+ s2:[['m','He redactado un manual de formación para novatos del gremio.','neutral'],['m','Si algún día falto, quiero que los nuevos estén preparados.','neutral'],['y','No pienso dejar que faltes, {n}.'],['m','...Eso es lo más amable que me han dicho en años.','happy']]}
+};
+
+const QT=[
+ {n:'Ratas en la bodega',d:'La posada del Cuervo está infestada de ratas gigantes.',f:'f',bg:'tavern',df:1},
+ {n:'Hierbas de luna',d:'Un herbolario necesita flores que solo brotan de noche.',f:'a',bg:'forest',df:1},
+ {n:'Escolta de mercader',d:'Una caravana cruza el Paso del Lobo y pide protección.',f:'f',bg:'forest',df:2},
+ {n:'El fantasma de la torre',d:'Una luz espectral acecha el viejo observatorio.',f:'m',bg:'ruins',df:2},
+ {n:'Plaga en la aldea',d:'Una fiebre extraña se extiende por Valleclaro.',f:'m',bg:'dawn',df:2},
+ {n:'Cartas del rey',d:'Un mensaje urgente debe llegar sin que lo intercepten.',f:'a',bg:'forest',df:2},
+ {n:'Bandidos del camino',d:'Los Cuchillas Negras asaltan viajeros en el cruce.',f:'f',bg:'forest',df:3},
+ {n:'Ruinas selladas',d:'Un portal arcano ha despertado bajo el viejo templo.',f:'m',bg:'ruins',df:3},
+ {n:'Contrabando en el puerto',d:'Alguien trafica con reliquias robadas en los muelles.',f:'a',bg:'night',df:3},
+ {n:'Cacería del troll',d:'Un troll de puente exige peaje... en carne.',f:'f',bg:'forest',df:4},
+ {n:'Mazmorra de cristal',d:'Cavernas cristalinas llenas de tesoros y trampas.',f:'x',bg:'ruins',df:4},
+ {n:'La bruja del pantano',d:'Una hechicera maldice las aguas de Brumafría.',f:'m',bg:'night',df:4},
+ {n:'Dragón de ceniza',d:'Un joven dragón ha hecho nido en la montaña.',f:'x',bg:'ruins',df:5},
+ {n:'El asedio de Piedra Alta',d:'Un ejército de no-muertos rodea la fortaleza.',f:'x',bg:'night',df:6}
+];
+const UPS={
+ hall:{n:'Salón ampliado',ic:'🏠',d:'+2 plazas de miembros.',cost:[150,320,600]},
+ infirm:{n:'Enfermería',ic:'🩹',d:'Los heridos se recuperan más rápido.',cost:[120,260,480]},
+ board:{n:'Tablón de misiones',ic:'📜',d:'+1 misión disponible y más prestigio por contrato.',cost:[100,240,450]},
+ tavern:{n:'Taberna del gremio',ic:'🍖',d:'Más lealtad al hablar con los miembros.',cost:[130,280,520]}
+};
+const rankOf=r=>r>=90?'S':r>=70?'A':r>=50?'B':r>=30?'C':r>=15?'D':'E';
+
+/* ============ retratos SVG ============ */
+function portrait(c,mood='neutral'){
+  const L=c.look,col=c.col||CLS[c.cls].col,dk=shade(col,-.35),hc=L.hair,sk=L.skin,skd=shade(sk,-.14),cls=c.cls;
+  let back='',front='',acc='';
+  if(L.style==='long')back=`<path d="M46 120 Q36 235 60 268 L140 268 Q164 235 154 120Z" fill="${hc}"/>`;
+  if(L.style==='bob')back=`<path d="M48 120 Q42 188 66 198 L134 198 Q158 188 152 120Z" fill="${hc}"/>`;
+  if(L.style==='twin')back=`<ellipse cx="36" cy="185" rx="17" ry="58" fill="${hc}"/><ellipse cx="164" cy="185" rx="17" ry="58" fill="${hc}"/>`;
+  if(cls==='rogue')back+=`<path d="M34 150 Q26 44 100 36 Q174 44 166 150 Q172 232 142 256 L58 256 Q28 232 34 150Z" fill="${dk}"/>`;
+  const bangs=L.style==='spiky'
+   ?`<path d="M50 135 L44 96 L66 82 L70 60 L92 74 L104 52 L118 74 L138 62 L142 84 L158 98 L150 135 Q140 100 118 96 Q100 108 82 96 Q60 100 50 135Z" fill="${hc}"/>`
+   :`<path d="M49 136 Q46 64 100 62 Q154 64 151 136 Q142 98 118 94 Q100 110 82 94 Q58 98 49 136Z" fill="${hc}"/>`;
+  front=bangs;
+  if(cls==='war'){acc=`<path d="M50 108 Q100 96 150 108 L150 121 Q100 109 50 121Z" fill="${col}"/><ellipse cx="42" cy="244" rx="30" ry="17" fill="#8d96a3"/><ellipse cx="158" cy="244" rx="30" ry="17" fill="#8d96a3"/>`}
+  if(cls==='mage'){acc=`<ellipse cx="100" cy="86" rx="68" ry="13" fill="${dk}"/><path d="M52 86 Q92 70 96 8 Q99 -4 108 12 Q114 70 148 86Z" fill="${col}"/><rect x="58" y="76" width="84" height="9" fill="#f2c14e"/>`}
+  if(cls==='heal'){acc=`<path d="M54 100 Q100 74 146 100" stroke="#f2c14e" stroke-width="5" fill="none"/><circle cx="100" cy="82" r="6" fill="#7fd6ff" stroke="#f2c14e" stroke-width="2"/><path d="M92 270 h16 v-14 h14 v-16 h-14 v-14 h-16 v14 h-14 v16 h14z" fill="#e8a33a" opacity=".9" transform="translate(0,6)"/>`}
+  if(cls==='arch'){acc=`<path d="M50 108 Q100 34 152 100 Q130 82 100 82 Q72 82 50 108Z" fill="${col}"/><path d="M134 84 Q168 60 180 30 Q160 50 134 76Z" fill="#e6e0c8"/><path d="M40 320 L150 232" stroke="#6b4a2a" stroke-width="9"/>`}
+  if(cls==='rogue'){acc=`<path d="M70 215 Q100 245 130 215 L130 232 Q100 262 70 232Z" fill="#b33a3a"/>`}
+  const sh=cls==='heal'?'#bfa24a':shade(col,.25);
+  const body=`<path d="M18 320 Q22 232 100 224 Q178 232 182 320Z" fill="${col}"/><path d="M82 224 L100 262 L118 224Z" fill="${shade(col,.3)}"/><path d="M18 320 Q22 232 100 224" stroke="${sh}" stroke-width="3" fill="none"/>`;
+  const e1=78,e2=122,ey=142,ic=L.eye;
+  let eyes='',brow='',mouth='',blush='';
+  const eye=x=>`<g class="blink"><ellipse cx="${x}" cy="${ey}" rx="10" ry="12" fill="#fff"/><ellipse cx="${x}" cy="${ey+1}" rx="7" ry="9.5" fill="${ic}"/><ellipse cx="${x}" cy="${ey+2}" rx="3.6" ry="5.2" fill="#14101c"/><circle cx="${x-2.5}" cy="${ey-3}" r="2.7" fill="#fff"/></g>`;
+  const closed=x=>`<path d="M${x-10} ${ey+3} Q${x} ${ey-9} ${x+10} ${ey+3}" stroke="#2a1b14" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  if(mood==='happy'){eyes=closed(e1)+closed(e2);mouth=`<path d="M86 172 Q100 188 114 172 Q100 178 86 172Z" fill="#a8323a" stroke="#6e1f26" stroke-width="2"/>`;blush=`<ellipse cx="66" cy="162" rx="10" ry="6" fill="#ff7aa8" opacity=".45"/><ellipse cx="134" cy="162" rx="10" ry="6" fill="#ff7aa8" opacity=".45"/>`;brow=`<path d="M66 121 Q78 115 90 121M110 121 Q122 115 134 121" stroke="${shade(hc,-.2)}" stroke-width="3" fill="none"/>`}
+  else{
+    eyes=eye(e1)+eye(e2);
+    if(mood==='sad'){mouth=`<path d="M89 178 Q100 168 111 178" stroke="#6e1f26" stroke-width="3" fill="none" stroke-linecap="round"/>`;brow=`<path d="M66 124 L90 116M110 116 L134 124" stroke="${shade(hc,-.2)}" stroke-width="3.4" fill="none"/>`}
+    else if(mood==='angry'){mouth=`<path d="M90 177 L110 177" stroke="#6e1f26" stroke-width="3.4" stroke-linecap="round"/>`;brow=`<path d="M64 114 L92 124M108 124 L136 114" stroke="${shade(hc,-.2)}" stroke-width="4.2" fill="none"/>`}
+    else if(mood==='surprised'){mouth=`<ellipse cx="100" cy="177" rx="6" ry="8" fill="#8a2a32"/>`;brow=`<path d="M66 116 Q78 108 90 116M110 116 Q122 108 134 116" stroke="${shade(hc,-.2)}" stroke-width="3" fill="none"/>`}
+    else{mouth=`<path d="M91 174 Q100 180 109 174" stroke="#6e1f26" stroke-width="3" fill="none" stroke-linecap="round"/>`;brow=`<path d="M66 121 Q78 116 90 121M110 121 Q122 116 134 121" stroke="${shade(hc,-.2)}" stroke-width="3" fill="none"/>`}
+  }
+  const glasses=c.glasses?`<g stroke="#3a2a1a" stroke-width="3" fill="rgba(180,220,255,.15)"><circle cx="${e1}" cy="${ey}" r="15"/><circle cx="${e2}" cy="${ey}" r="15"/><path d="M93 ${ey} h14"/></g>`:'';
+  return `<svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg">${back}${body}${cls==='rogue'?acc:''}<rect x="87" y="186" width="26" height="42" fill="${skd}"/><ellipse cx="100" cy="135" rx="49" ry="57" fill="${sk}"/><ellipse cx="51" cy="140" rx="7" ry="11" fill="${sk}"/><ellipse cx="149" cy="140" rx="7" ry="11" fill="${sk}"/>${blush}${eyes}${glasses}${brow}<path d="M100 150 L97 164 L103 164" stroke="${skd}" stroke-width="2" fill="none"/>${mouth}${front}${cls==='rogue'?'':acc}</svg>`;
+}
+const faceSvg=c=>portrait(c,'neutral').replace('viewBox="0 0 200 320"','viewBox="30 40 140 150" preserveAspectRatio="xMidYMid slice"');
+
+/* ============ fondos ============ */
+const BG={
+ hall:'linear-gradient(#5a3b2a,#8a5a3a 62%,#4a2e1f 62%,#2e1c12)',
+ dawn:'linear-gradient(#ffb36b,#ffd9a0 45%,#e8a25a 70%,#5a3b2a 70%,#3a2417)',
+ night:'linear-gradient(#070b24,#1a2150 60%,#0c0f22 60%,#05060f)',
+ forest:'linear-gradient(#a8d98a,#d8f0b0 40%,#4f8a3a 62%,#2d5a24)',
+ ruins:'linear-gradient(#1a1626,#34304a 55%,#16121f 55%,#0a0810)',
+ tavern:'linear-gradient(#3a1f12,#6b3b1f 62%,#3a2012 62%,#1f1109)',
+ black:'#000'
+};
+function deco(k){
+  const W=1600,H=900;let s='';
+  if(k==='hall'||k==='tavern'){
+    s+=`<rect y="560" width="${W}" height="340" fill="#00000030"/>`;
+    for(let i=0;i<4;i++){const x=180+i*380;s+=`<path d="M${x} 480 V200 Q${x+70} 100 ${x+140} 200 V480Z" fill="${k==='hall'?'#ffe9a8':'#f2a65a'}" opacity=".55"/><path d="M${x} 480 V200 Q${x+70} 100 ${x+140} 200 V480Z" fill="none" stroke="#2a180e" stroke-width="10"/><path d="M${x+70} 130 V480M${x} 330 H${x+140}" stroke="#2a180e" stroke-width="5"/>`}
+    s+=`<path d="M640 40 h320 v190 l-160 -40 l-160 40z" fill="#7a1f2a"/><circle cx="800" cy="115" r="38" fill="#f2c14e"/><path d="M780 120 l20 -40 l20 40 l-20 14z" fill="#7a1f2a"/>`;
+    for(const x of [300,1300])s+=`<line x1="${x}" y1="0" x2="${x}" y2="110" stroke="#2a180e" stroke-width="4"/><circle cx="${x}" cy="130" r="22" fill="#ffd36b"/><circle cx="${x}" cy="130" r="70" fill="#ffd36b" opacity=".18"/>`;
+    s+=`<rect x="0" y="560" width="${W}" height="14" fill="#2a180e"/>`;
+    if(k==='tavern')for(let i=0;i<3;i++)s+=`<ellipse cx="${200+i*110}" cy="640" rx="46" ry="62" fill="#6a3b1c" stroke="#2a180e" stroke-width="5"/><path d="M${156+i*110} 610h88M${156+i*110} 668h88" stroke="#2a180e" stroke-width="5"/>`;
+  }
+  if(k==='night'||k==='dawn'){
+    if(k==='night'){s+=`<circle cx="1250" cy="170" r="70" fill="#f5f0d0"/><circle cx="1280" cy="150" r="60" fill="#1a2150"/>`;for(let i=0;i<60;i++)s+=`<circle cx="${rnd(0,W)}" cy="${rnd(0,430)}" r="${Math.random()*2+.6}" fill="#fff" opacity="${Math.random()*.7+.3}"/>`}
+    else s+=`<circle cx="400" cy="480" r="150" fill="#fff4c0" opacity=".7"/>`;
+    const c=k==='night'?'#090c1c':'#4a2a18';
+    for(let x=0;x<W;x+=130){const h=rnd(100,230);s+=`<path d="M${x} 560 V${560-h} L${x+65} ${520-h} L${x+130} ${560-h} V560Z" fill="${c}"/>`;if(k==='night')s+=`<rect x="${x+40}" y="${590-h}" width="22" height="30" fill="#ffd36b" opacity="${Math.random()>.4?.9:0}"/>`}
+  }
+  if(k==='forest'){
+    for(let i=0;i<14;i++){const x=i*125+rnd(-20,20),h=rnd(280,430);s+=`<rect x="${x+40}" y="${560-30}" width="26" height="60" fill="#3a2414"/><path d="M${x} 540 L${x+53} ${540-h} L${x+106} 540Z" fill="${i%2?'#2f6a2a':'#3e8434'}"/>`}
+    s+=`<circle cx="1280" cy="130" r="80" fill="#fff6c0" opacity=".85"/>`;
+  }
+  if(k==='ruins'){
+    for(let i=0;i<7;i++){const x=i*240-30;s+=`<rect x="${x}" y="${rnd(160,260)}" width="60" height="420" fill="#3a3550"/><path d="M${x+60} 400 Q${x+120} 240 ${x+180} 400" stroke="#3a3550" stroke-width="30" fill="none"/>`}
+    s+=`<circle cx="800" cy="360" r="60" fill="#8a5fff" opacity=".5"/><circle cx="800" cy="360" r="110" fill="#8a5fff" opacity=".15"/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice">${s}</svg>`;
+}
+let curBg='';
+function setBg(k){if(k===curBg)return;curBg=k;const b=$('#bg'),d=$('#bgdeco');b.style.opacity=0;d.style.opacity=0;setTimeout(()=>{b.style.background=BG[k]||BG.hall;d.innerHTML=deco(k);b.style.opacity=1;d.style.opacity=1},220)}
+(function(){const f=$('#fx');for(let i=0;i<18;i++){const e=document.createElement('i');e.style.left=Math.random()*100+'%';e.style.bottom=(-5)+'%';e.style.animationDuration=(9+Math.random()*12)+'s';e.style.animationDelay=(-Math.random()*20)+'s';f.appendChild(e)}})();
+
+/* ============ motor de novela visual ============ */
+const stage={left:null,center:null,right:null};
+const slotEl=s=>document.querySelector('.slot.'+s);
+function renderSlot(s,fresh){const e=slotEl(s),o=stage[s];if(!o){e.innerHTML='';e.style.display='none';return}e.style.display='';e.innerHTML=portrait(o.c,o.mood);if(fresh){e.classList.remove('in');void e.offsetWidth;e.classList.add('in')}}
+function clearStage(){for(const s in stage){stage[s]=null;renderSlot(s)}}
+function placeChar(c,mood,side){
+  let slot=Object.keys(stage).find(s=>stage[s]&&stage[s].c.id===c.id);
+  if(slot){if(stage[slot].mood!==mood){stage[slot].mood=mood;renderSlot(slot)}return slot}
+  slot=side||(!stage.right?'right':!stage.left?'left':'right');
+  stage[slot]={c,mood};renderSlot(slot,true);return slot;
+}
+function highlight(slot){for(const s in stage)slotEl(s).classList.toggle('dim',!!slot&&s!==slot&&!!stage[s])}
+let pend=null;
+const adv=()=>{if(pend)pend()};
+$('#dlg').addEventListener('click',adv);
+document.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){if(pend){e.preventDefault();pend()}}});
+let tm=null;
+function say(who,text,mood='neutral',side){
+  return new Promise(res=>{
+    $('#menu').style.display='none';$('#hubtip').style.display='none';$('#choices').style.display='none';
+    const d=$('#dlg');d.style.display='block';d.classList.toggle('narr',!who);
+    let slot=null;
+    if(who&&who.portrait!==false)slot=placeChar(who,mood,side);
+    highlight(slot);
+    $('#name').textContent=who?who.name:'';
+    const t=$('#text');let i=0,done=false;t.textContent='';$('#next').style.visibility='hidden';
+    clearInterval(tm);
+    const fin=()=>{clearInterval(tm);t.textContent=text;$('#next').style.visibility='visible';done=true};
+    tm=setInterval(()=>{i+=2;t.textContent=text.slice(0,i);if(i>=text.length)fin()},16);
+    pend=()=>{if(!done){fin();return}pend=null;res()};
+  });
+}
+function choose(opts,speaker){
+  return new Promise(res=>{
+    const c=$('#choices');c.innerHTML='';
+    opts.forEach((o,i)=>{const b=document.createElement('button');b.className='ch';b.innerHTML=o.t+(o.s?`<small>${o.s}</small>`:'');b.disabled=!!o.off;b.onclick=()=>{c.style.display='none';res(i)};c.appendChild(b)});
+    c.style.display='flex';pend=null;
+  });
+}
+const toast=(m)=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2400)};
+
+/* ============ estado del juego ============ */
+let G=null;
+let uid=100;
+const MIRA={id:'mira',name:'Mira',cls:'npc',col:'#3d6a7a',glasses:true,look:{skin:SK[1],hair:'#5a3825',eye:'#2e9e5b',style:'bob'}};
+const ME={id:'me',name:'Tú',portrait:false};
+function mkNpc(name,cls,col){return {id:'n'+(uid++),name,cls:cls||'npc',col,look:{skin:pick(SK),hair:pick(HC),eye:pick(EC),style:pick(STY)}}}
+function mkMember(cls,lvl,o={}){
+  const base={war:[6,1,3],mage:[1,7,2],rogue:[2,2,7],heal:[2,6,3],arch:[3,2,6]}[cls];
+  const st={f:base[0],m:base[1],a:base[2]};
+  const main=CLS[cls].main;
+  for(let i=1;i<lvl;i++){st[main]++;st[pick(['f','m','a'])]++}
+  const used=(G?G.members.concat(G.cands||[]).map(m=>m.name):[]);
+  const name=o.name||pick(NAMES.filter(n=>!used.includes(n)).concat(['Aldo']));
+  return {id:'m'+(uid++),name,cls,lvl,xp:0,st,loy:o.loy??40,inj:0,busy:false,pers:o.pers||pick(Object.keys(PERS)),flags:{},
+    look:{skin:pick(SK),hair:pick(HC),eye:pick(EC),style:pick(STY)}};
+}
+const byId=id=>G.members.find(m=>m.id===id);
+const avail=m=>!m.busy&&m.inj<=0;
+const cap=()=>3+G.up.hall*2;
+const wages=()=>4+G.members.length*3;
+function toNext(m){return m.lvl*3}
+function power(m,f){
+  const s=m.st;let v=f==='x'?(s.f+s.m+s.a)/2.2:s[f];
+  return v+m.lvl+m.loy/25;
+}
+function qChance(q,ids,appr){
+  const party=ids.map(byId).filter(Boolean);if(!party.length)return 0;
+  let P=party.reduce((a,m)=>a+power(m,q.f),0);
+  if(party.some(m=>m.cls==='heal'))P+=2;
+  const R=q.df*6+q.slots*4;
+  let c=.6+(P-R)/R*.6;
+  c+= appr==='safe'?.1:appr==='bold'?-.1:0;
+  return clamp(c,.05,.95);
+}
+function genQuest(){
+  const maxDf=clamp(1+Math.floor(G.rep/18),1,6);
+  const opts=QT.filter(t=>t.df<=maxDf&&t.df>=Math.max(1,maxDf-2));
+  const t=pick(opts.length?opts:QT.slice(0,3));
+  const df=t.df;
+  return {id:'q'+(uid++),n:t.n,d:t.d,f:t.f,bg:t.bg,df,slots:clamp(1+Math.floor(df/2),1,3),days:1+(df>=3?1:0)+(df>=5?1:0),
+    gold:df*22+rnd(0,20),rep:df+(df>=4?1:0)+(G.up.board>0?1:0),age:0};
+}
+function refreshQuests(){
+  G.quests.forEach(q=>q.age++);G.quests=G.quests.filter(q=>q.age<=3);
+  const n=3+G.up.board;while(G.quests.length<n)G.quests.push(genQuest());
+}
+function genCands(){
+  G.cands=[];const n=rnd(1,2)+(G.rep>=30?1:0);
+  for(let i=0;i<n;i++){
+    const c=mkMember(pick(Object.keys(CLS).filter(k=>k!=='npc')),clamp(1+Math.floor(G.rep/25)+rnd(0,1),1,5),{loy:30});
+    c.cost=40+c.lvl*25+rnd(0,15);G.cands.push(c);
+  }
+}
+function save(){try{localStorage.setItem('guildsave1',JSON.stringify({G,uid}))}catch(e){}}
+function hasSave(){try{return !!localStorage.getItem('guildsave1')}catch(e){return false}}
+try{if(hasSave())$('#contBtn').style.display=''}catch(e){}
+
+/* ============ HUD y menú ============ */
+function hud(){
+  const h=$('#hud');h.style.display='flex';
+  h.innerHTML=`<span>🏰 <b>${G.guild}</b></span><span>📅 Día <b>${G.day}</b></span><span>💰 <b>${G.gold}</b></span><span>⭐ Rango <b>${rankOf(G.rep)}</b> · ${G.rep}/100</span><span>👥 <b>${G.members.length}/${cap()}</b></span>`;
+}
+function hub(){
+  hud();clearStage();placeChar(MIRA,'happy','left');highlight(null);
+  $('#dlg').style.display='none';$('#choices').style.display='none';pend=null;
+  const m=$('#menu');m.style.display='flex';
+  const nq=G.quests.length;
+  m.innerHTML=`<button onclick="openQuests()">📜 Misiones (${nq})</button><button onclick="openRoster()">👥 Miembros</button><button onclick="openRecruit()">🧑‍🤝‍🧑 Reclutar${G.cands.length?' ('+G.cands.length+')':''}</button><button onclick="openUpgrades()">🏛️ Mejoras</button><button onclick="doSave()">💾 Guardar</button><button class="end" onclick="endDay()">🌙 Terminar el día</button>`;
+  const tip=$('#hubtip');tip.style.display='block';
+  const act=G.active.length?`${G.active.length} equipo(s) en misión.`:'Ningún equipo en misión.';
+  tip.innerHTML=`<b style="color:var(--gold)">Día ${G.day}</b> — ${act} Gastos diarios: <b>${wages()}</b> 💰.`;
+}
+function doSave(){save();toast('💾 Partida guardada')}
+function openPanel(t,html){$('#ptitle').textContent=t;$('#pbody').innerHTML=html;$('#panel').style.display='flex'}
+function closePanel(){$('#panel').style.display='none'}
+
+/* ---- miembros ---- */
+const stat=m=>`<span class="tag">⚔️ ${m.st.f}</span> <span class="tag">🔮 ${m.st.m}</span> <span class="tag">🏃 ${m.st.a}</span>`;
+function status(m){return m.busy?'<span class="tag mid">En misión</span>':m.inj>0?`<span class="tag bad">Herido ${m.inj}d</span>`:'<span class="tag ok">Disponible</span>'}
+function openRoster(){
+  let h='<div class="grid">';
+  G.members.forEach(m=>{
+    const can=avail(m)&&!G.talked[m.id];
+    h+=`<div class="card"><div class="row"><div class="face">${faceSvg(m)}</div><div style="flex:1"><h3>${m.name}</h3><div style="font-size:13px;color:var(--dim)">${CLS[m.cls].ic} ${CLS[m.cls].n} · Nv ${m.lvl} · ${PERSN[m.pers]}</div>${status(m)}</div></div>
+    <div>${stat(m)}</div>
+    <div class="row" style="font-size:13px">❤️ Lealtad <div class="bar"><i style="width:${m.loy}%"></i></div> ${m.loy}</div>
+    <div class="row" style="font-size:12px;color:var(--dim)">XP ${m.xp}/${toNext(m)}</div>
+    <div class="btns"><button class="b pri" ${can?'':'disabled'} onclick="talk('${m.id}')">💬 ${G.talked[m.id]?'Ya hablaste hoy':'Hablar'}</button><button class="b" onclick="fire('${m.id}')">Despedir</button></div></div>`;
+  });
+  if(!G.members.length)h+='<p>No tienes miembros. ¡Recluta alguno!</p>';
+  openPanel('Miembros del gremio',h+'</div>');
+}
+async function fire(id){const m=byId(id);if(!m||m.busy)return toast('No puedes despedir a alguien en misión');if(!confirm('¿Despedir a '+m.name+'?'))return;G.members=G.members.filter(x=>x!==m);closePanel();hud();openRoster()}
+
+/* ---- misiones ---- */
+function chanceLbl(c){const p=Math.round(c*100);return `<b class="${p>=70?'ok':p>=45?'mid':'bad'}">${p}%</b>`}
+function openQuests(){
+  let h='<h4>Tablón de contratos</h4><div class="grid">';
+  G.quests.forEach(q=>{
+    h+=`<div class="card"><h3>${q.n}</h3><p>${q.d}</p><div class="btns"><span class="tag">Dificultad ${'★'.repeat(q.df)}</span><span class="tag">${{f:'⚔️ Fuerza',m:'🔮 Magia',a:'🏃 Agilidad',x:'Todas'}[q.f]}</span><span class="tag">👥 ${q.slots}</span><span class="tag">⏳ ${q.days}d</span></div>
+    <div>💰 ${q.gold} · ⭐ +${q.rep} <span style="color:var(--dim);font-size:12px">(caduca en ${4-q.age}d)</span></div>
+    <button class="b pri" onclick="assign('${q.id}')">Asignar equipo</button></div>`;
+  });
+  h+='</div>';
+  if(G.active.length){h+='<h4>En curso</h4><div class="grid">';
+    G.active.forEach(a=>{h+=`<div class="card"><h3>${a.q.n}</h3><p>${a.ids.map(i=>byId(i)?.name).join(', ')}</p><span class="tag mid">Regresan en ${a.left} noche(s)</span></div>`});
+    h+='</div>';}
+  openPanel('Misiones',h);
+}
+let sel=null;
+function assign(qid){
+  const q=G.quests.find(x=>x.id===qid);if(!q)return;
+  sel={q,ids:[],appr:'std'};renderAssign();
+}
+function renderAssign(){
+  const {q,ids,appr}=sel;const c=qChance(q,ids,appr);
+  let h=`<div class="card" style="margin-bottom:12px"><h3>${q.n}</h3><p>${q.d}</p><div>Dificultad ${'★'.repeat(q.df)} · Equipo: <b>${ids.length}/${q.slots}</b> · 💰 ${q.gold} · ⭐ +${q.rep}</div><div style="font-size:16px">Probabilidad de éxito: ${ids.length?chanceLbl(c):'—'}</div></div>`;
+  h+='<h4>Enfoque</h4><div class="btns">'+[['safe','🛡️ Cauteloso','+10% éxito, 80% recompensa'],['std','⚖️ Estándar','Sin cambios'],['bold','🔥 Audaz','−10% éxito, 140% recompensa, más riesgo']].map(([k,t,d])=>`<button class="b ${appr===k?'sel':''}" onclick="sel.appr='${k}';renderAssign()">${t}<br><small style="color:var(--dim)">${d}</small></button>`).join('')+'</div>';
+  h+='<h4>Elige miembros</h4><div class="grid">';
+  G.members.forEach(m=>{
+    const ok=avail(m),on=ids.includes(m.id);
+    h+=`<div class="card ${on?'sel':''}" style="${ok?'cursor:pointer':'opacity:.45'}" ${ok?`onclick="togg('${m.id}')"`:''}><div class="row"><div class="face">${faceSvg(m)}</div><div><h3>${m.name}</h3><div style="font-size:12px;color:var(--dim)">${CLS[m.cls].n} Nv${m.lvl}</div>${stat(m)}<div style="margin-top:3px">${status(m)}</div></div></div></div>`;
+  });
+  h+=`</div><div class="btns" style="margin-top:14px"><button class="b" onclick="openQuests()">← Volver</button><button class="b pri" ${ids.length?'':'disabled'} onclick="sendQuest()">🚀 Enviar equipo</button></div>`;
+  openPanel('Asignar equipo',h);
+}
+function togg(id){const i=sel.ids.indexOf(id);if(i>=0)sel.ids.splice(i,1);else if(sel.ids.length<sel.q.slots)sel.ids.push(id);else toast('Equipo completo');renderAssign()}
+async function sendQuest(){
+  const {q,ids,appr}=sel;closePanel();
+  const ch=qChance(q,ids,appr);
+  ids.forEach(i=>byId(i).busy=true);
+  G.quests=G.quests.filter(x=>x!==q);
+  G.active.push({q,ids:[...ids],left:q.days,appr,chance:ch});
+  const names=ids.map(i=>byId(i).name).join(' y ');
+  setBg('hall');clearStage();
+  await say(MIRA,`Contrato "${q.n}" firmado. ${names} parten al amanecer.`,'happy','left');
+  const lead=byId(ids[0]);
+  await say(lead,pick(['¡Volveremos con buenas noticias!','Dadnos unos días. No os defraudaremos.','Vamos allá.']),'happy');
+  hub();
+}
+
+/* ---- reclutar ---- */
+function openRecruit(){
+  let h='<div class="grid">';
+  G.cands.forEach(c=>{
+    h+=`<div class="card"><div class="row"><div class="face">${faceSvg(c)}</div><div><h3>${c.name}</h3><div style="font-size:13px;color:var(--dim)">${CLS[c.cls].ic} ${CLS[c.cls].n} · Nv ${c.lvl} · ${PERSN[c.pers]}</div>${stat(c)}</div></div>
+    <div>Contratación: 💰 <b>${c.cost}</b></div><button class="b pri" onclick="interview('${c.id}')">🗣️ Entrevistar</button></div>`;
+  });
+  if(!G.cands.length)h+='<p>Hoy no hay aspirantes. Vuelve mañana.</p>';
+  openPanel(`Aspirantes (${G.members.length}/${cap()} plazas)`,h+'</div>');
+}
+async function interview(id){
+  const c=G.cands.find(x=>x.id===id);if(!c)return;
+  closePanel();$('#menu').style.display='none';
+  if(G.members.length>=cap()){toast('Sin plazas libres: mejora el salón');return hub()}
+  setBg('hall');clearStage();
+  await say(null,`${c.name}, ${CLS[c.cls].n.toLowerCase()} de nivel ${c.lvl}, se presenta ante tu escritorio.`);
+  const intro={orgulloso:'Soy lo mejor que le puede pasar a este lugar. Y lo sé.',timido:'H-hola... vengo por el anuncio. Si no es molestia...',alegre:'¡Buenas! ¡Qué sitio tan acogedor! ¿Contratáis a gente simpática?',sarcastico:'Vaya, qué... pintoresco. Me encanta lo de las goteras.',serio:'Vengo a trabajar. Mi currículum habla por mí.'}[c.pers];
+  await say(c,intro,'neutral','right');
+  await say(MIRA,`Pide ${c.cost} de oro por firmar. ¿Qué le preguntas?`,'neutral','left');
+  const a=await choose([
+    {t:'«¿Por qué quieres unirte a nosotros?»'},
+    {t:'«Cuéntame cuál ha sido tu mayor logro.»'},
+    {t:'«Solo dime si estás dispuesto a obedecer.»',s:'Directo'},
+    {t:'Rechazar al aspirante'}]);
+  if(a===3){await say(c,'Entiendo... gracias por su tiempo.','sad');G.cands=G.cands.filter(x=>x!==c);return hub()}
+  const good={0:['alegre','timido'],1:['orgulloso','sarcastico'],2:['serio']}[a].includes(c.pers);
+  c.loy=clamp(c.loy+(good?15:a===2?-5:4),5,100);
+  await say(c,good?pick(['¡Me alegra que lo pregunte!','Esa es justo la pregunta que esperaba.']):pick(['Mm... responderé lo que pueda.','Eh... supongo.']),good?'happy':'neutral');
+  const d=await choose([{t:`Contratar a ${c.name} (${c.cost} 💰)`,off:G.gold<c.cost,s:G.gold<c.cost?'No tienes suficiente oro':''},{t:'Dejarlo para más tarde'}]);
+  if(d===0){G.gold-=c.cost;G.members.push(c);G.cands=G.cands.filter(x=>x!==c);
+    await say(c,pick(['¡Prometo no decepcionarle!','Un placer. Empecemos.','Gracias por la oportunidad.']),'happy');
+    await say(MIRA,`Bienvenido/a al gremio, ${c.name}. Te enseñaré dónde dormir.`,'happy','left');}
+  hub();
+}
+
+/* ---- mejoras ---- */
+function openUpgrades(){
+  let h='<div class="grid">';
+  for(const k in UPS){const u=UPS[k],lv=G.up[k],cost=u.cost[lv];
+    h+=`<div class="card"><h3>${u.ic} ${u.n} <span class="tag">Nv ${lv}/3</span></h3><p>${u.d}</p>${lv>=3?'<span class="tag ok">Máximo</span>':`<button class="b pri" ${G.gold>=cost?'':'disabled'} onclick="buyUp('${k}')">Mejorar — 💰 ${cost}</button>`}</div>`}
+  openPanel('Mejoras del gremio',h+'</div>');
+}
+function buyUp(k){const lv=G.up[k],c=UPS[k].cost[lv];if(G.gold<c)return;G.gold-=c;G.up[k]++;if(k==='board')refreshQuests();hud();toast(UPS[k].n+' mejorado');openUpgrades()}
+
+/* ---- hablar ---- */
+async function talk(id){
+  const m=byId(id);if(!m)return;closePanel();G.talked[id]=1;
+  const P=PERS[m.pers];setBg(pick(['hall','tavern']));clearStage();
+  const tav=1+G.up.tavern*.3;
+  await say(m,pick(P.hi),'neutral','right');
+  const o=await choose([{t:'👏 Elogiar su trabajo'},{t:'📖 Darle un consejo'},{t:'🍖 Invitarle a comer',s:'−10 💰',off:G.gold<10},{t:'Despedirse'}]);
+  if(o===3)return hub();
+  const key=['praise','advice','meal'][o];
+  if(o===2)G.gold-=10;
+  const gain=Math.round((6+(P.like===key?7:0))*tav);
+  m.loy=clamp(m.loy+gain,0,100);
+  await say(m,P[key],P.like===key?'happy':'neutral');
+  await say(null,`${m.name} ${P.like===key?'está encantado/a':'parece agradecido/a'}. Lealtad +${gain}.`);
+  // historias personales
+  const beat=async(arr)=>{for(const [w,t,mood] of arr){const tx=t.replace(/\{n\}/g,m.name);if(w==='m')await say(m,tx,mood||'neutral');else if(w==='y')await say(ME,tx);else await say(null,tx)}};
+  if(m.loy>=50&&!m.flags.s1){m.flags.s1=1;await say(null,`${m.name} parece querer contarte algo...`);await beat(P.s1);const s=CLS[m.cls].main;m.st[s]++;await say(null,`Vínculo fortalecido: ${m.name} gana +1 en su atributo principal.`)}
+  else if(m.loy>=80&&!m.flags.s2){m.flags.s2=1;await say(null,`${m.name} se acerca con una expresión sincera.`);await beat(P.s2);m.st[pick(['f','m','a'])]++;m.st[CLS[m.cls].main]++;await say(null,`${m.name} confía plenamente en ti. ¡Sus atributos aumentan!`)}
+  hub();
+}
+
+/* ============ fin de día ============ */
+async function resolveMission(a){
+  const q=a.q,party=a.ids.map(byId).filter(Boolean);
+  G.active=G.active.filter(x=>x!==a);party.forEach(m=>m.busy=false);
+  if(!party.length)return;
+  setBg(q.bg);clearStage();
+  const names=party.map(m=>m.name).join(' y ');
+  await say(null,`Misión "${q.n}"... ${names} regresan al gremio.`);
+  const roll=Math.random(),ok=roll<a.chance,crit=ok&&roll<a.chance*.3;
+  const mult=a.appr==='safe'?.8:a.appr==='bold'?1.4:1;
+  const leader=party[0],P=PERS[leader.pers];
+  if(ok){
+    const gold=Math.round(q.gold*mult*(crit?1.25:1)),rep=Math.max(1,Math.round(q.rep*(a.appr==='bold'?1.3:1)));
+    G.gold+=gold;G.rep=clamp(G.rep+rep,0,100);
+    await say(null,pick([`El equipo vuelve cubierto de polvo, pero sonriendo.`,`Entran riendo, cargados de botín y de historias.`,`Regresan con paso firme: el trabajo está hecho.`]));
+    await say(leader,P.win,'happy','right');
+    if(crit)await say(null,'¡Éxito rotundo! Encontraron un botín extra (+25% de oro).');
+    await say(MIRA,`Contrato cumplido: +${gold} 💰 y +${rep} ⭐ de prestigio.`,'happy','left');
+    for(const m of party){m.xp+=2+q.df;m.loy=clamp(m.loy+3,0,100);
+      while(m.xp>=toNext(m)){m.xp-=toNext(m);m.lvl++;m.st[CLS[m.cls].main]++;m.st[pick(['f','m','a'])]++;await say(null,`⬆️ ¡${m.name} sube a nivel ${m.lvl}!`)}}
+  }else{
+    const loss=a.appr==='bold'?2:1;G.rep=clamp(G.rep-loss,0,100);
+    const healer=party.some(m=>m.cls==='heal');
+    await say(null,pick([`Vuelven magullados y en silencio.`,`La misión se torció. Regresan arrastrando los pies.`,`El plan salió mal; apenas lograron escapar.`]));
+    await say(leader,P.lose,'sad','right');
+    const hurt=[];
+    party.forEach(m=>{m.loy=clamp(m.loy-3,0,100);if(Math.random()<(a.appr==='bold'?.55:.35)*(healer?.5:1)){m.inj=2+(a.appr==='bold'?1:0);hurt.push(m.name)}m.xp+=1});
+    await say(MIRA,`Contrato fallido: −${loss} ⭐ de prestigio.${hurt.length?' Heridos: '+hurt.join(', ')+'.':' Por suerte, nadie salió herido.'}`,'sad','left');
+  }
+  hud();
+}
+
+const EVENTS=[
+ {id:'noble',run:async()=>{
+  const lady=mkNpc('Lady Veyra','npc','#7a1f5a');setBg('hall');clearStage();
+  await say(null,'Una carroza elegante se detiene ante el gremio. Una noble de mirada afilada entra.');
+  await say(lady,`Así que este es ${G.guild}. Rústico. Quiero ser vuestra mecenas.`,'neutral','right');
+  await say(MIRA,'Cuidado, jefe. Los nobles nunca regalan nada.','surprised','left');
+  const c=await choose([{t:'Aceptar su mecenazgo',s:'+80 💰, −3 ⭐ (te dictará misiones)'},{t:'Rechazar con orgullo',s:'+3 ⭐'},{t:'Negociar condiciones',s:'50%: +60 💰 y +1 ⭐ / si no, nada'}]);
+  if(c===0){G.gold+=80;G.rep=clamp(G.rep-3,0,100);await say(lady,'Sabia decisión. Ya os avisaré de mis encargos.','happy')}
+  else if(c===1){G.rep=clamp(G.rep+3,0,100);await say(lady,'¡Insolente...! Pero admiro el carácter. Hablarán de esto en la ciudad.','angry')}
+  else if(Math.random()<.5){G.gold+=60;G.rep++;await say(lady,'Sabéis negociar. Aquí tenéis una donación sin ataduras.','happy')}
+  else await say(lady,'No me convence. Buenas tardes.','neutral');
+ }},
+ {id:'brawl',min:2,run:async()=>{
+  const [a,b]=[...G.members].sort(()=>Math.random()-.5);setBg('tavern');clearStage();
+  await say(null,'Un estruendo sacude el comedor del gremio. Hay sillas volando.');
+  await say(a,`¡Ese estofado era MÍO, ${b.name}!`,'angry','left');
+  await say(b,'¡Estaba en la mesa común! ¡Ni que fuera tu nombre en el plato!','angry','right');
+  const c=await choose([{t:'Separarlos y poner paz',s:'Ambos +3 lealtad'},{t:'Dejar que se desahoguen',s:'Un miembro +6, el otro −6'},{t:'Invitar a una ronda para todos',s:'−15 💰, todos +4 lealtad',off:G.gold<15}]);
+  if(c===0){a.loy=clamp(a.loy+3,0,100);b.loy=clamp(b.loy+3,0,100);await say(MIRA,'Eso sí es liderar. Los dos se han calmado.','happy','left')}
+  else if(c===1){const w=pick([a,b]),l=w===a?b:a;w.loy=clamp(w.loy+6,0,100);l.loy=clamp(l.loy-6,0,100);await say(null,`${w.name} ganó el combate de cucharas. ${l.name} se va ofendido/a.`)}
+  else{G.gold-=15;G.members.forEach(m=>m.loy=clamp(m.loy+4,0,100));await say(a,'¡Brindo por el jefe!','happy');await say(b,'¡Y por el estofado, que se vuelva a hacer!','happy','right')}
+ }},
+ {id:'merchant',run:async()=>{
+  const mer=mkNpc('Don Baltasar','npc','#5a4a2a');setBg('dawn');clearStage();
+  await say(null,'Un mercader errante instala su carro frente al gremio.');
+  await say(mer,'¡Tónicos de la Amistad Eterna! Un sorbo y tu equipo te adora. Garantizado*. (*No garantizado.)','happy','right');
+  const c=await choose([{t:'Comprar un tónico',s:'−40 💰, +8 lealtad a un miembro',off:G.gold<40||!G.members.length},{t:'Regatear',s:'−20 💰, 50% de éxito',off:G.gold<20||!G.members.length},{t:'Ignorarlo'}]);
+  if(c===0){const m=pick(G.members);G.gold-=40;m.loy=clamp(m.loy+8,0,100);await say(null,`${m.name} bebe el tónico. Funciona (o eso dice).`)}
+  else if(c===1){G.gold-=20;if(Math.random()<.5){const m=pick(G.members);m.loy=clamp(m.loy+8,0,100);await say(mer,'¡Me ha ganado, joven! Aquí tiene.','happy');await say(null,`${m.name} se siente mejor. +8 lealtad.`)}else await say(mer,'¡Ja! Sin trato. Gracias por los 20.','happy')}
+  else await say(mer,'¡Vuelva cuando se anime!','neutral');
+ }},
+ {id:'inspector',run:async()=>{
+  const ins=mkNpc('Inspector Ruiz','npc','#444a5a');setBg('hall');clearStage();
+  await say(null,'Un funcionario del reino entra con un portapapeles y cara de pocos amigos.');
+  await say(ins,'Inspección fiscal. Necesito ver los libros de este gremio. O una "tasa de colaboración".','neutral','right');
+  const c=await choose([{t:'Pagar la tasa',s:'−30 💰'},{t:'Mostrar los libros',s:G.rep>=25?'Rango C o más: +2 ⭐':'Con poco prestigio: −30 💰 y −2 ⭐'},{t:'Intentar un soborno',s:'−15 💰, 40% de que te descubra: −5 ⭐'}]);
+  if(c===0){G.gold-=30;await say(ins,'Gracias por la cooperación.','neutral')}
+  else if(c===1){if(G.rep>=25){G.rep=clamp(G.rep+2,0,100);await say(ins,'Todo en orden. Un gremio modelo.','happy')}else{G.gold-=30;G.rep=clamp(G.rep-2,0,100);await say(ins,'Irregularidades. Multa y anotación en el registro.','angry')}}
+  else{G.gold-=15;if(Math.random()<.4){G.rep=clamp(G.rep-5,0,100);await say(ins,'¡¿Un soborno?! Esto irá en mi informe.','angry')}else await say(ins,'... No he visto nada. Buenos días.','neutral')}
+ }},
+ {id:'cat',run:async()=>{
+  setBg('dawn');clearStage();
+  await say(null,'Un gatito empapado maúlla en la puerta del gremio. Te mira con enormes ojos.');
+  await say(MIRA,'Jefe... por favor... ¿podemos?','happy','left');
+  const c=await choose([{t:'Adoptarlo',s:'Todos +3 lealtad'},{t:'Darle un cuenco de leche y dejarlo ir'}]);
+  if(c===0){G.members.forEach(m=>m.loy=clamp(m.loy+3,0,100));await say(null,'El gato, bautizado "Sargento Bigotes", se adueña de la silla del jefe. El ánimo mejora.')}
+  else await say(null,'El gatito lame la leche y desaparece entre los tejados.');
+ }},
+ {id:'rival',min:1,run:async()=>{
+  const riv=mkNpc('Sir Gael','war','#6b6f78');setBg('hall');clearStage();
+  await say(null,'Un caballero plateado irrumpe en el salón.');
+  await say(riv,'Soy Sir Gael de los Lobos Plateados. Os desafío a un duelo de campeones. ¡Que decidan los mejores!','angry','right');
+  const av=G.members.filter(avail);
+  if(!av.length){await say(MIRA,'Todos andan fuera o heridos... Tendremos que rechazarlo con mucha vergüenza.','sad','left');G.rep=clamp(G.rep-1,0,100);return}
+  const c=await choose(av.map(m=>({t:`Enviar a ${m.name}`,s:`${CLS[m.cls].n} Nv${m.lvl}`})).concat([{t:'Declinar el duelo',s:'−1 ⭐'}]));
+  if(c===av.length){G.rep=clamp(G.rep-1,0,100);return}
+  const m=av[c];const mine=power(m,CLS[m.cls].main==='f'?'f':CLS[m.cls].main)+rnd(0,8),his=8+G.rep/10*1.5+rnd(0,8);
+  await say(m,'Preparado. Empecemos.','angry','left');
+  await say(null,'Acero contra acero, la sala entera contiene la respiración...');
+  if(mine>=his){G.rep=clamp(G.rep+5,0,100);G.gold+=40;m.loy=clamp(m.loy+6,0,100);await say(riv,'Imposible... os lo concedo. Tomad esta bolsa.','sad');await say(null,`¡${m.name} gana! +5 ⭐, +40 💰.`)}
+  else{G.rep=clamp(G.rep-3,0,100);m.inj=1;await say(riv,'Mejor suerte la próxima vez.','happy');await say(null,`${m.name} pierde el duelo. −3 ⭐ y queda herido un día.`)}
+ }},
+ {id:'festival',run:async()=>{
+  setBg('dawn');clearStage();
+  await say(null,'Es el Festival de la Cosecha. Banderines y música llenan la plaza.');
+  await say(MIRA,'¡Una oportunidad para que el pueblo nos conozca! ¿Qué hacemos, jefe?','happy','left');
+  const c=await choose([{t:'Montar un puesto de comida',s:'−20 💰, gana entre 25 y 60 💰, +1 ⭐',off:G.gold<20},{t:'Participar en el desfile',s:'+2 ⭐'},{t:'Descansar todos juntos',s:'Todos +3 lealtad'}]);
+  if(c===0){G.gold-=20;const g=rnd(25,60);G.gold+=g;G.rep=clamp(G.rep+1,0,100);await say(null,`El puesto del gremio se agota. Ganancia: ${g} 💰.`)}
+  else if(c===1){G.rep=clamp(G.rep+2,0,100);await say(null,'El grifo dorado desfila entre aplausos. Todos hablan de vosotros.')}
+  else{G.members.forEach(m=>m.loy=clamp(m.loy+3,0,100));await say(null,'Un día de risas, comida y música. El gremio se siente como una familia.')}
+ }},
+ {id:'thief',run:async()=>{
+  setBg('night');clearStage();
+  await say(null,'En mitad de la noche, un ruido sospechoso resuena en el despacho...');
+  const thief=mkNpc('Sombra','rogue','#222');
+  await say(thief,'Solo he venido a... tomar prestado algo de oro.','happy','right');
+  const hunters=G.members.filter(m=>avail(m)&&(m.cls==='rogue'||m.cls==='arch'));
+  const opts=[{t:'Gritar pidiendo ayuda'},{t:'Dejarle marchar',s:'−25 💰'}];
+  if(hunters.length)opts.unshift({t:`Llamar a ${hunters[0].name} para atraparle`});
+  const c=await choose(opts);
+  if(hunters.length&&c===0){const h=hunters[0];await say(h,'¡Alto ahí!','angry','left');await say(null,`${h.name} lo derriba y recupera el oro. ¡Además le saca una confesión útil!`);h.loy=clamp(h.loy+5,0,100);G.rep=clamp(G.rep+1,0,100)}
+  else if((hunters.length&&c===1)||(!hunters.length&&c===0)){if(Math.random()<.5){await say(null,'Los gritos despiertan a todos. El ladrón huye con las manos vacías.')}else{G.gold=Math.max(0,G.gold-25);await say(null,'El ladrón escapa por el tejado con 25 monedas.')}}
+  else{G.gold=Math.max(0,G.gold-25);await say(null,'El ladrón hace una reverencia burlona y se esfuma con 25 monedas.')}
+ }}
+];
+
+async function endDay(){
+  closePanel();$('#menu').style.display='none';$('#hubtip').style.display='none';
+  setBg('night');clearStage();
+  await say(null,`Cae la noche sobre ${G.guild}. Las velas se encienden una a una.`);
+  const w=wages();G.gold-=w;
+  await say(MIRA,`Gastos del día: ${w} 💰 en velas, comida y sueldos. Caja: ${G.gold} 💰.`,G.gold<0?'sad':'neutral','left');
+  for(const a of [...G.active]){a.left--;if(a.left<=0)await resolveMission(a)}
+  const rec=1+G.up.infirm;G.members.forEach(m=>{if(!m.busy&&m.inj>0)m.inj=Math.max(0,m.inj-rec)});
+  // deserciones
+  for(const m of [...G.members]){
+    if(m.loy<12&&!m.busy){setBg('hall');clearStage();
+      await say(m,'Jefe... me voy. Este lugar ya no es para mí.','sad','right');
+      const c=await choose([{t:'Dejarle marchar'},{t:'Convencerle de que se quede',s:'−20 💰',off:G.gold<20}]);
+      if(c===1){G.gold-=20;m.loy=35;await say(m,'...Está bien. Una oportunidad más.','neutral')}
+      else{G.members=G.members.filter(x=>x!==m);await say(null,`${m.name} abandona el gremio.`)}}
+  }
+  if(Math.random()<.5){
+    const ev=pick(EVENTS.filter(e=>(e.min||0)<=G.members.length));
+    if(ev){try{await ev.run()}catch(e){console.error(e)}}
+  }
+  G.day++;G.talked={};refreshQuests();genCands();
+  if(G.gold<-60||G.rep<=0)return gameOver();
+  if(G.rep>=100&&!G.won){G.won=1;await victory()}
+  save();morning();
+}
+async function morning(){
+  setBg('dawn');clearStage();hud();
+  const t=pick(['Los primeros rayos entran por las ventanas del gremio.','Un nuevo día comienza en la ciudad.','El aroma del pan recién hecho flota por el salón.']);
+  await say(null,`Día ${G.day}. ${t}`);
+  let msg=`Buenos días, jefe. Hay ${G.quests.length} contratos en el tablón`;
+  if(G.cands.length)msg+=` y ${G.cands.length} aspirante(s) esperando`;
+  msg+='.';
+  if(G.gold<0)msg+=' Y... estamos en deuda. Hay que arreglarlo pronto.';
+  await say(MIRA,msg,G.gold<0?'sad':'happy','left');
+  hub();
+}
+async function gameOver(){
+  $('#hud').style.display='none';setBg('night');clearStage();
+  await say(null,G.rep<=0?'Nadie confía ya en el nombre del gremio. Las puertas se cierran para siempre.':'Las deudas te ahogan. Los acreedores embargan el edificio.');
+  await say(MIRA,'Hemos hecho lo que hemos podido, jefe... Ha sido un honor.','sad','left');
+  await say(null,`FIN — Sobreviviste ${G.day} días.`);
+  try{localStorage.removeItem('guildsave1')}catch(e){}
+  location.reload();
+}
+async function victory(){
+  setBg('hall');clearStage();
+  await say(null,`El nombre de ${G.guild} resuena en todo el reino. Rango S: Gremio Legendario.`);
+  await say(MIRA,'Jefe... ¿te acuerdas del primer día, con las goteras? Míranos ahora.','happy','left');
+  for(const m of G.members.slice(0,2))await say(m,pick(['Ha sido un viaje increíble.','Gracias por creer en nosotros.']),'happy','right');
+  await say(null,'🏆 ¡HAS GANADO! Puedes seguir jugando para mejorar tu leyenda.');
+}
+
+/* ============ inicio ============ */
+function startNew(){
+  const name=$('#gname').value.trim()||'El Grifo Dorado';
+  G={guild:name,day:1,gold:120,rep:10,up:{hall:0,infirm:0,board:0,tavern:0},members:[],quests:[],active:[],cands:[],talked:{},won:0};
+  const a=mkMember('war',1,{name:'Kael',loy:45,pers:'orgulloso'}),b=mkMember('mage',1,{name:'Lysa',loy:45,pers:'timido'});
+  a.look={skin:SK[1],hair:HC[1],eye:EC[0],style:'spiky'};b.look={skin:SK[0],hair:HC[5],eye:EC[3],style:'twin'};
+  G.members.push(a,b);refreshQuests();genCands();
+  $('#title').style.display='none';intro();
+}
+function loadGame(){
+  try{const s=JSON.parse(localStorage.getItem('guildsave1'));G=s.G;uid=s.uid}catch(e){return toast('Error al cargar')}
+  $('#title').style.display='none';morning();
+}
+async function intro(){
+  hud();setBg('hall');clearStage();
+  const [kael,lysa]=G.members;
+  await say(null,`La puerta de ${G.guild} cruje al abrirse. Dentro, polvo, goteras y un cartel torcido.`);
+  await say(MIRA,'¡Bienvenido, nuevo maestro del gremio! Soy Mira, la secretaria. Su tío me dejó a cargo... y las deudas.','happy','left');
+  await say(MIRA,'Solo quedan dos aventureros leales. Y apenas unas pocas monedas.','sad');
+  await say(kael,'Kael, guerrero. Si tienes buenas misiones, cuenta conmigo.','neutral','right');
+  await say(lysa,'L-Lysa, maga. Encantada... espero no ser un estorbo.','happy','center');
+  await say(MIRA,'Así funciona: acepta contratos en el tablón, envía equipos, cuida de su lealtad hablando con ellos y recluta nuevos aspirantes.','neutral','left');
+  await say(MIRA,'Cada noche pagamos gastos. Si te hundes en deudas o pierdes todo el prestigio, se acabó. Tu meta: ¡alcanzar el Rango S con 100 de prestigio!','surprised');
+  await say(ME,`Entonces empecemos. ¡Haremos de ${G.guild} una leyenda!`);
+  await say(MIRA,'¡Esa es la actitud! Empiece por el tablón de misiones.','happy');
+  save();hub();
+}
+</script>
+</body>
+</html>
